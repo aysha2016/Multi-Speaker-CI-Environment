@@ -1,0 +1,6 @@
+{
+  "name": "CI-AI Research Lab",
+  "description": "Multi-Speaker Cochlear Implant Research Prototype for AI separation, identification, spatial filtering, and neural representation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
