@@ -293,45 +293,59 @@ app.post('/api/github/publish', async (req, res) => {
     const repoUrl = repoData.html_url || `https://github.com/${owner}/${repoName.trim()}`;
     const cloneUrl = repoData.clone_url || `https://github.com/${owner}/${repoName.trim()}.git`;
 
-    // 3. Push README.md to the repository
-    try {
-      const readmePath = path.resolve(__dirname, 'README.md');
-      if (fs.existsSync(readmePath)) {
-        const readmeContent = fs.readFileSync(readmePath, 'utf-8');
-        const contentBase64 = Buffer.from(readmeContent).toString('base64');
+    // 3. Push core repository files including README, package.json, lockfile, vite config, and GitHub Actions workflow
+    const filesToCommit = [
+      { local: 'README.md', repo: 'README.md', msg: 'docs: publish multi-speaker cochlear implant documentation' },
+      { local: 'package.json', repo: 'package.json', msg: 'feat: configure app dependencies and build scripts' },
+      { local: 'package-lock.json', repo: 'package-lock.json', msg: 'chore: lockfile for reproducible CI/CD builds' },
+      { local: 'vite.config.ts', repo: 'vite.config.ts', msg: 'build: configure Vite with relative base for GitHub Pages' },
+      { local: 'index.html', repo: 'index.html', msg: 'feat: root HTML template' },
+      { local: '.github/workflows/deploy.yml', repo: '.github/workflows/deploy.yml', msg: 'ci: add GitHub Pages deployment workflow' },
+    ];
 
-        // Check if README.md exists to get its SHA
-        let sha: string | undefined;
-        const fileCheck = await fetch(
-          `https://api.github.com/repos/${owner}/${repoName.trim()}/contents/README.md`,
-          {
-            headers: {
-              Authorization: `Bearer ${token.trim()}`,
-              'User-Agent': 'CI-AI-Research-Lab',
-            },
+    for (const item of filesToCommit) {
+      try {
+        const filePath = path.resolve(__dirname, item.local);
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath);
+          const contentBase64 = content.toString('base64');
+
+          // Check if file already exists on repo to get SHA
+          let sha: string | undefined;
+          const fileCheck = await fetch(
+            `https://api.github.com/repos/${owner}/${repoName.trim()}/contents/${item.repo}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token.trim()}`,
+                'User-Agent': 'CI-AI-Research-Lab',
+              },
+            }
+          );
+          if (fileCheck.ok) {
+            const fileData: any = await fileCheck.json();
+            sha = fileData.sha;
           }
-        );
-        if (fileCheck.ok) {
-          const fileData = await fileCheck.json();
-          sha = fileData.sha;
-        }
 
-        await fetch(`https://api.github.com/repos/${owner}/${repoName.trim()}/contents/README.md`, {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token.trim()}`,
-            'User-Agent': 'CI-AI-Research-Lab',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: 'docs: publish multi-speaker cochlear implant research documentation',
-            content: contentBase64,
-            ...(sha ? { sha } : {}),
-          }),
-        });
+          await fetch(
+            `https://api.github.com/repos/${owner}/${repoName.trim()}/contents/${item.repo}`,
+            {
+              method: 'PUT',
+              headers: {
+                Authorization: `Bearer ${token.trim()}`,
+                'User-Agent': 'CI-AI-Research-Lab',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: item.msg,
+                content: contentBase64,
+                ...(sha ? { sha } : {}),
+              }),
+            }
+          );
+        }
+      } catch (fileErr) {
+        console.warn(`Could not push file ${item.local}:`, fileErr);
       }
-    } catch (pushErr) {
-      console.warn('Could not push README file:', pushErr);
     }
 
     return res.json({
