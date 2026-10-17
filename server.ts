@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
@@ -219,6 +220,130 @@ app.post('/api/auth/github/verify', async (req, res) => {
     return res.status(400).json({ error: 'Either a GitHub token or username is required' });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Failed to authenticate GitHub account' });
+  }
+});
+
+// Endpoint to publish project directly to GitHub
+app.post('/api/github/publish', async (req, res) => {
+  try {
+    const {
+      token,
+      repoName = 'ci-ai-research-lab',
+      isPrivate = false,
+      description = 'Multi-Speaker Cochlear Implant Research Prototype for AI separation, identification, spatial filtering, and neural representation.',
+    } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        error: 'GitHub Personal Access Token is required to create and publish a repository.',
+      });
+    }
+
+    // 1. Get user profile
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${token.trim()}`,
+        'User-Agent': 'CI-AI-Research-Lab',
+      },
+    });
+
+    if (!userRes.ok) {
+      const err = await userRes.json();
+      return res.status(userRes.status).json({ error: err.message || 'Invalid GitHub token' });
+    }
+
+    const userData = await userRes.json();
+    const owner = userData.login;
+
+    // 2. Create repo on GitHub
+    const createRes = await fetch('https://api.github.com/user/repos', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token.trim()}`,
+        'User-Agent': 'CI-AI-Research-Lab',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: repoName.trim(),
+        description,
+        private: !!isPrivate,
+        auto_init: true,
+      }),
+    });
+
+    let repoData = await createRes.json();
+
+    if (!createRes.ok && createRes.status !== 422) {
+      return res.status(createRes.status).json({ error: repoData.message || 'Failed to create repository' });
+    }
+
+    // If 422 (already exists), fetch existing repo details
+    if (createRes.status === 422) {
+      const existingRes = await fetch(`https://api.github.com/repos/${owner}/${repoName.trim()}`, {
+        headers: {
+          Authorization: `Bearer ${token.trim()}`,
+          'User-Agent': 'CI-AI-Research-Lab',
+        },
+      });
+      if (existingRes.ok) {
+        repoData = await existingRes.json();
+      }
+    }
+
+    const repoUrl = repoData.html_url || `https://github.com/${owner}/${repoName.trim()}`;
+    const cloneUrl = repoData.clone_url || `https://github.com/${owner}/${repoName.trim()}.git`;
+
+    // 3. Push README.md to the repository
+    try {
+      const readmePath = path.resolve(__dirname, 'README.md');
+      if (fs.existsSync(readmePath)) {
+        const readmeContent = fs.readFileSync(readmePath, 'utf-8');
+        const contentBase64 = Buffer.from(readmeContent).toString('base64');
+
+        // Check if README.md exists to get its SHA
+        let sha: string | undefined;
+        const fileCheck = await fetch(
+          `https://api.github.com/repos/${owner}/${repoName.trim()}/contents/README.md`,
+          {
+            headers: {
+              Authorization: `Bearer ${token.trim()}`,
+              'User-Agent': 'CI-AI-Research-Lab',
+            },
+          }
+        );
+        if (fileCheck.ok) {
+          const fileData = await fileCheck.json();
+          sha = fileData.sha;
+        }
+
+        await fetch(`https://api.github.com/repos/${owner}/${repoName.trim()}/contents/README.md`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token.trim()}`,
+            'User-Agent': 'CI-AI-Research-Lab',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: 'docs: publish multi-speaker cochlear implant research documentation',
+            content: contentBase64,
+            ...(sha ? { sha } : {}),
+          }),
+        });
+      }
+    } catch (pushErr) {
+      console.warn('Could not push README file:', pushErr);
+    }
+
+    return res.json({
+      success: true,
+      repoUrl,
+      cloneUrl,
+      owner,
+      repoName: repoName.trim(),
+      message: `Repository ${repoName} is published on GitHub!`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to publish to GitHub' });
   }
 });
 

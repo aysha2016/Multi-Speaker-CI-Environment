@@ -114,11 +114,80 @@ class RealSpeechAudioEngine {
     return this.waveforms.get(speakerId) || null;
   }
 
-  // Play single real speaker speech
+  private audioMode: 'wav' | 'tts' = 'wav';
+
+  public setAudioMode(mode: 'wav' | 'tts') {
+    this.audioMode = mode;
+  }
+
+  public getAudioMode(): 'wav' | 'tts' {
+    return this.audioMode;
+  }
+
+  // Live Web Speech API Synthesis for natural browser voice speech
+  public playTTS(
+    speakerId: string,
+    voiceType: 'Male' | 'Female' = 'Male',
+    onEnded?: () => void
+  ): void {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      this.playSyntheticFallback(speakerId, 3.0, onEnded);
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+      const transcript = SPEAKER_TRANSCRIPTS[speakerId]?.text || 'Speech utterance';
+      const cleanText = transcript.replace(/[“”"]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+
+      utterance.rate = 0.95;
+      if (voiceType === 'Female') {
+        utterance.pitch = 1.25;
+      } else {
+        utterance.pitch = 0.88;
+      }
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const enVoices = voices.filter((v) => v.lang.startsWith('en'));
+        if (voiceType === 'Female') {
+          const femaleVoice = enVoices.find((v) =>
+            /female|samantha|zira|karen|victoria|moira/i.test(v.name)
+          );
+          if (femaleVoice) utterance.voice = femaleVoice;
+        } else {
+          const maleVoice = enVoices.find((v) =>
+            /male|david|alex|george|daniel|oliver/i.test(v.name)
+          );
+          if (maleVoice) utterance.voice = maleVoice;
+        }
+      }
+
+      utterance.onend = () => {
+        if (onEnded) onEnded();
+      };
+      utterance.onerror = () => {
+        if (onEnded) onEnded();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      this.playSyntheticFallback(speakerId, 3.0, onEnded);
+    }
+  }
+
+  // Play single real speaker speech (supports pre-recorded acoustic WAV or live TTS)
   public async playSpeakerAudio(
     speakerId: string,
+    voiceType: 'Male' | 'Female' = 'Male',
     onEnded?: () => void
   ): Promise<void> {
+    if (this.audioMode === 'tts') {
+      this.playTTS(speakerId, voiceType, onEnded);
+      return;
+    }
+
     const ctx = this.initContext();
     await this.preloadAudio();
 
@@ -126,8 +195,8 @@ class RealSpeechAudioEngine {
 
     const buffer = this.audioBuffers.get(speakerId);
     if (!buffer) {
-      // Fallback synthesizer if buffer failed to load
-      this.playSyntheticFallback(speakerId, 3.0, onEnded);
+      // Fallback to Web Speech API TTS
+      this.playTTS(speakerId, voiceType, onEnded);
       return;
     }
 

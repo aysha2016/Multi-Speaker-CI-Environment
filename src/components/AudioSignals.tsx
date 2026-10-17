@@ -41,6 +41,13 @@ export const AudioSignals: React.FC<AudioSignalsProps> = ({
     return () => cancelAnimationFrame(frameId);
   }, [state.isPlaying, playingId]);
 
+  const [audioMode, setAudioMode] = useState<'wav' | 'tts'>('wav');
+
+  const handleSetAudioMode = (mode: 'wav' | 'tts') => {
+    setAudioMode(mode);
+    audioEngine.setAudioMode(mode);
+  };
+
   const handleTogglePlaySpeaker = (spk: SpeakerConfig) => {
     if (playingId === spk.id) {
       audioEngine.stopSpeakerAudio(spk.id);
@@ -48,7 +55,7 @@ export const AudioSignals: React.FC<AudioSignalsProps> = ({
     } else {
       audioEngine.stopAll();
       setPlayingId(spk.id);
-      audioEngine.playSpeakerAudio(spk.id, () => {
+      audioEngine.playSpeakerAudio(spk.id, spk.voice, () => {
         setPlayingId(null);
       });
     }
@@ -80,7 +87,7 @@ export const AudioSignals: React.FC<AudioSignalsProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-[#E3EAF3] p-5 shadow-xs flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-2">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#1677FF] flex items-center justify-center">
             <Volume2 className="w-3.5 h-3.5" />
@@ -94,10 +101,32 @@ export const AudioSignals: React.FC<AudioSignalsProps> = ({
             </p>
           </div>
         </div>
-        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-          <Mic className="w-2.5 h-2.5 text-emerald-600" />
-          <span>REAL SPEECH</span>
-        </span>
+
+        {/* Real Speech Mode Selector */}
+        <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <button
+            onClick={() => handleSetAudioMode('wav')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+              audioMode === 'wav'
+                ? 'bg-white text-blue-700 shadow-2xs font-extrabold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+            title="Real acoustic studio speech WAV recordings"
+          >
+            Acoustic WAV
+          </button>
+          <button
+            onClick={() => handleSetAudioMode('tts')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+              audioMode === 'tts'
+                ? 'bg-white text-emerald-700 shadow-2xs font-extrabold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+            title="Live Web Speech API Voice Synthesis"
+          >
+            Web Speech TTS
+          </button>
+        </div>
       </div>
 
       {/* Speaker Rows */}
