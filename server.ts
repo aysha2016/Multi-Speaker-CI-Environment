@@ -293,15 +293,44 @@ app.post('/api/github/publish', async (req, res) => {
     const repoUrl = repoData.html_url || `https://github.com/${owner}/${repoName.trim()}`;
     const cloneUrl = repoData.clone_url || `https://github.com/${owner}/${repoName.trim()}.git`;
 
-    // 3. Push core repository files including README, package.json, lockfile, vite config, and GitHub Actions workflow
-    const filesToCommit = [
+    // 3. Collect core repository files and full production assets for GitHub Pages
+    const filesToCommit: { local: string; repo: string; msg: string }[] = [
       { local: 'README.md', repo: 'README.md', msg: 'docs: publish multi-speaker cochlear implant documentation' },
       { local: 'package.json', repo: 'package.json', msg: 'feat: configure app dependencies and build scripts' },
       { local: 'package-lock.json', repo: 'package-lock.json', msg: 'chore: lockfile for reproducible CI/CD builds' },
       { local: 'vite.config.ts', repo: 'vite.config.ts', msg: 'build: configure Vite with relative base for GitHub Pages' },
-      { local: 'index.html', repo: 'index.html', msg: 'feat: root HTML template' },
+      { local: 'tsconfig.json', repo: 'tsconfig.json', msg: 'chore: typescript config' },
+      { local: 'index.html', repo: 'index.html', msg: 'feat: universal HTML template with static fallback' },
+      { local: '.nojekyll', repo: '.nojekyll', msg: 'chore: disable Jekyll processing on GitHub Pages' },
+      { local: 'scripts/copy-build.js', repo: 'scripts/copy-build.js', msg: 'chore: post-build sync script' },
       { local: '.github/workflows/deploy.yml', repo: '.github/workflows/deploy.yml', msg: 'ci: add GitHub Pages deployment workflow' },
+      { local: 'assets/index.js', repo: 'assets/index.js', msg: 'build: compiled JavaScript application bundle' },
+      { local: 'assets/index.css', repo: 'assets/index.css', msg: 'build: compiled Tailwind CSS bundle' },
+      { local: 'docs/index.html', repo: 'docs/index.html', msg: 'build: production HTML for GitHub Pages docs deployment' },
+      { local: 'docs/.nojekyll', repo: 'docs/.nojekyll', msg: 'chore: disable Jekyll in docs' },
+      { local: 'docs/assets/index.js', repo: 'docs/assets/index.js', msg: 'build: docs javascript bundle' },
+      { local: 'docs/assets/index.css', repo: 'docs/assets/index.css', msg: 'build: docs stylesheet bundle' },
     ];
+
+    // Recursively scan src directory to push all source code
+    function addDirRecursive(dir: string) {
+      if (!fs.existsSync(dir)) return;
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const relPath = path.relative(__dirname, fullPath).replace(/\\/g, '/');
+        if (entry.isDirectory()) {
+          addDirRecursive(fullPath);
+        } else {
+          filesToCommit.push({
+            local: relPath,
+            repo: relPath,
+            msg: `feat: sync ${relPath}`,
+          });
+        }
+      }
+    }
+    addDirRecursive(path.resolve(__dirname, 'src'));
 
     for (const item of filesToCommit) {
       try {

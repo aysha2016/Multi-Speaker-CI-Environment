@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CI-AI Research Lab — Multi-Speaker CI Environment Prototype</title>
+    <meta name="description" content="Multi-Speaker Cochlear Implant Research Prototype: Separate, identify, and process multiple speakers for cochlear implant users." />
+    <meta property="og:title" content="CI-AI Research Lab — Multi-Speaker CI Environment Prototype" />
+    <meta property="og:description" content="Separate, identify and process multiple speakers for cochlear implant users." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/index.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Universal fallback for GitHub Pages branch deployments (main branch / root) -->
+    <script>
+      (function() {
+        function loadProductionFallback() {
+          var root = document.getElementById('root');
+          if (root && root.children.length === 0) {
+            console.warn('[CI-AI Lab] Static host detected without active dev server. Loading compiled bundle...');
+            if (!document.querySelector('link[href*="index.css"]')) {
+              var cssLink = document.createElement('link');
+              cssLink.rel = 'stylesheet';
+              cssLink.crossOrigin = 'anonymous';
+              cssLink.href = './assets/index.css';
+              document.head.appendChild(cssLink);
+            }
+            var script = document.createElement('script');
+            script.type = 'module';
+            script.crossOrigin = 'anonymous';
+            script.src = './assets/index.js';
+            document.body.appendChild(script);
+            setTimeout(function() {
+              var r = document.getElementById('root');
+              if (r && r.children.length === 0 && !window.location.pathname.includes('/docs/')) {
+                var p = window.location.pathname;
+                var base = p.endsWith('/') ? p : p + '/';
+                window.location.replace(base + 'docs/');
+              }
+            }, 1000);
+          }
+        }
+        setTimeout(loadProductionFallback, 300);
+      })();
+    </script>
+  </body>
+</html>
+

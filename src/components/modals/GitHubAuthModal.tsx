@@ -41,14 +41,14 @@ export const GitHubAuthModal: React.FC<GitHubAuthModalProps> = ({
 
   // Sub-tabs for login method
   const [authMethod, setAuthMethod] = useState<'quick' | 'oauth' | 'token'>('quick');
-  const [usernameInput, setUsernameInput] = useState('amunawwara');
+  const [usernameInput, setUsernameInput] = useState('aysha2016');
   const [tokenInput, setTokenInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   // Publish form states
-  const [repoName, setRepoName] = useState('ci-ai-research-lab');
+  const [repoName, setRepoName] = useState('Multi-Speaker-CI-Environment');
   const [repoDesc, setRepoDesc] = useState(
     'Multi-Speaker Cochlear Implant Research Prototype for AI separation, identification, spatial filtering, and neural representation.'
   );
@@ -737,17 +737,14 @@ git push -u origin main`;
               <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Why Did Deployment Fail? Root Causes & Fixes</span>
+                  <span>Why Was the GitHub Pages Deployment Showing a Blank Page?</span>
                 </div>
                 <div className="text-[11px] text-amber-800 space-y-1.5 leading-relaxed">
                   <p>
-                    <strong>1. GitHub Actions Build Failed:</strong> npm encountered an <code>ERESOLVE</code> dependency conflict between <code>esbuild</code> and <code>vite@8.3.4</code>, and was missing <code>package-lock.json</code> for <code>npm ci</code>.
+                    <strong>Root Cause of Blank Page:</strong> GitHub Pages repository was set to &quot;Deploy from a branch (main / root)&quot;. GitHub served the raw <code>index.html</code> from the root, which requested <code>/src/main.tsx</code> (TypeScript source code). Browsers cannot run unbundled TypeScript files directly and returned 404, causing <code>&lt;div id=&quot;root&quot;&gt;</code> to stay completely empty.
                   </p>
                   <p>
-                    <strong>2. Cloud Run Shared URL (404 Not Found):</strong> The production URL (<code>ais-pre-...run.app</code>) returns 404 until you click the <strong>&quot;Publish&quot; / &quot;Deploy&quot;</strong> button in the top-right bar of Google AI Studio to build the cloud container.
-                  </p>
-                  <p>
-                    <strong>3. GitHub Pages Subdirectory 404s:</strong> Default Vite builds used root absolute paths (<code>/assets/...</code>) which break when hosted at <code>https://user.github.io/repo/</code>.
+                    <strong>Resolution Implemented:</strong> We have compiled the production bundle into <code>assets/index.js</code> and <code>assets/index.css</code>, added universal auto-fallback loader in <code>index.html</code>, generated a <code>docs/</code> production mirror with <code>.nojekyll</code>, and enhanced the GitHub Actions workflow to publish to both GitHub Pages and <code>gh-pages</code> branch.
                   </p>
                 </div>
               </div>
@@ -756,24 +753,28 @@ git push -u origin main`;
               <div className="p-3.5 bg-slate-900 rounded-xl text-white space-y-2.5">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Deployment Fixes Applied to Codebase</span>
+                  <span>All Fixes Applied & Verified in Codebase</span>
                 </div>
                 <div className="space-y-1.5 text-[11px]">
                   <div className="flex items-center gap-2 text-slate-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span><strong>Resolved Dependency Conflict:</strong> Fixed esbuild peer version conflict in <code>package.json</code>.</span>
+                    <span><strong>Static Auto-Loader in index.html:</strong> Detects static hosting and dynamically loads <code>./assets/index.js</code> &amp; <code>./assets/index.css</code>.</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span><strong>Generated Clean Lockfile:</strong> Created <code>package-lock.json</code> (223 packages, 0 vulnerabilities).</span>
+                    <span><strong>Disabled Jekyll Interference:</strong> Created <code>.nojekyll</code> files to ensure GitHub Pages does not strip assets.</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span><strong>Relative Base Path:</strong> Set <code>base: &#39;./&#39;</code> in <code>vite.config.ts</code> for flawless GitHub Pages loading.</span>
+                    <span><strong>Dual Deployment Mirrors:</strong> Production bundles synced to both <code>/assets</code> and <code>/docs</code> for GitHub branch deployments.</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span><strong>CI/CD Workflow Hardened:</strong> Added fallback from <code>npm ci</code> to <code>npm install</code> in GitHub Actions.</span>
+                    <span><strong>Deterministic Build Outputs:</strong> Configured Vite to output reliable <code>index.js</code> and <code>index.css</code> without unpredictable hashes.</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span><strong>Full Source &amp; Lockfile:</strong> <code>package-lock.json</code> created and dependency conflicts (esbuild peer) resolved.</span>
                   </div>
                 </div>
               </div>
@@ -782,22 +783,55 @@ git push -u origin main`;
               <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
                   <Rocket className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Next Step to Activate GitHub Pages</span>
+                  <span>Configuring GitHub Repository Settings</span>
                 </div>
                 <ol className="list-decimal list-inside text-[11px] text-blue-800 space-y-1 leading-relaxed">
-                  <li>Open your repository on GitHub: <strong>github.com/amunawwara/ci-ai-research-lab</strong></li>
-                  <li>Click <strong>Settings &rarr; Pages</strong> in the left sidebar</li>
-                  <li>Under <strong>Build and deployment &gt; Source</strong>, choose <strong>GitHub Actions</strong></li>
-                  <li>Go to the <strong>Actions</strong> tab to see the green automated deployment!</li>
+                  <li>
+                    Open repo settings:{' '}
+                    <a
+                      href={`https://github.com/${currentUser?.login || usernameInput || 'aysha2016'}/${repoName || 'Multi-Speaker-CI-Environment'}/settings/pages`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-semibold text-blue-900 hover:text-blue-700"
+                    >
+                      github.com/{currentUser?.login || usernameInput || 'aysha2016'}/{repoName || 'Multi-Speaker-CI-Environment'}/settings/pages
+                    </a>
+                  </li>
+                  <li>Under <strong>Build and deployment &gt; Source</strong>, choose <strong>GitHub Actions</strong> (recommended).</li>
+                  <li>Alternatively, if keeping <em>Deploy from a branch</em>, select <strong>Folder: /docs</strong> or branch <strong>gh-pages</strong>.</li>
+                  <li>Push latest code or run workflow in the <strong>Actions</strong> tab to refresh the site!</li>
                 </ol>
               </div>
 
               {/* URL Cards */}
               <div className="space-y-2.5">
+                {/* GitHub Pages URL */}
+                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800 mb-1">
+                    <span>GitHub Pages Live URL:</span>
+                    <span className="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-mono font-semibold">GitHub Pages</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 p-2 bg-white border border-emerald-200 rounded-lg font-mono text-xs">
+                    <span className="truncate text-emerald-950 font-medium">
+                      {`https://${currentUser?.login || usernameInput || 'aysha2016'}.github.io/${repoName || 'Multi-Speaker-CI-Environment'}/`}
+                    </span>
+                    <a
+                      href={`https://${currentUser?.login || usernameInput || 'aysha2016'}.github.io/${repoName || 'Multi-Speaker-CI-Environment'}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 hover:bg-emerald-50 rounded text-emerald-700 shrink-0"
+                      title="Open in new tab"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Cloud Run Shared URL */}
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
                     <span>Google Cloud Run Shared Production URL:</span>
-                    <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">Requires Top-Bar Deploy</span>
+                    <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">Full-Stack Cloud Run</span>
                   </div>
                   <div className="flex items-center justify-between gap-2 p-2 bg-white border border-slate-200 rounded-lg font-mono text-xs">
                     <span className="truncate text-slate-900">{LIVE_DEPLOYED_URL}</span>
@@ -814,48 +848,28 @@ git push -u origin main`;
                     </button>
                   </div>
                 </div>
-
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[11px] font-semibold text-slate-500 mb-1">
-                    Development Applet URL:
-                  </div>
-                  <div className="flex items-center justify-between gap-2 p-2 bg-white border border-slate-200 rounded-lg font-mono text-xs">
-                    <span className="truncate text-slate-900">{DEV_CALLBACK.replace('/auth/callback', '')}</span>
-                    <button
-                      onClick={() => copyToClipboard(DEV_CALLBACK.replace('/auth/callback', ''), 'dev')}
-                      className="p-1 hover:bg-slate-100 rounded text-slate-600 shrink-0 cursor-pointer"
-                      title="Copy URL"
-                    >
-                      {copiedDev ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
               </div>
 
-              {/* Quick Navigation Action */}
+              {/* Quick Navigation Actions */}
               <div className="flex gap-2">
                 <a
-                  href={`https://github.com/${currentUser?.login || 'amunawwara'}/${repoName || 'ci-ai-research-lab'}/actions`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-colors"
-                >
-                  <Github className="w-4 h-4" />
-                  <span>Check GitHub Actions Runs</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-                <a
-                  href={LIVE_DEPLOYED_URL}
+                  href={`https://${currentUser?.login || usernameInput || 'aysha2016'}.github.io/${repoName || 'Multi-Speaker-CI-Environment'}/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-colors"
                 >
                   <Globe className="w-4 h-4" />
-                  <span>Test Cloud Run URL</span>
+                  <span>Open GitHub Pages</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+                <a
+                  href={`https://github.com/${currentUser?.login || usernameInput || 'aysha2016'}/${repoName || 'Multi-Speaker-CI-Environment'}/actions`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-colors"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>Check Actions Runs</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>

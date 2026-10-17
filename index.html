@@ -16,6 +16,38 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Universal fallback for GitHub Pages branch deployments (main branch / root) -->
+    <script>
+      (function() {
+        function loadProductionFallback() {
+          var root = document.getElementById('root');
+          if (root && root.children.length === 0) {
+            console.warn('[CI-AI Lab] Static host detected without active dev server. Loading compiled bundle...');
+            if (!document.querySelector('link[href*="index.css"]')) {
+              var cssLink = document.createElement('link');
+              cssLink.rel = 'stylesheet';
+              cssLink.crossOrigin = 'anonymous';
+              cssLink.href = './assets/index.css';
+              document.head.appendChild(cssLink);
+            }
+            var script = document.createElement('script');
+            script.type = 'module';
+            script.crossOrigin = 'anonymous';
+            script.src = './assets/index.js';
+            document.body.appendChild(script);
+            setTimeout(function() {
+              var r = document.getElementById('root');
+              if (r && r.children.length === 0 && !window.location.pathname.includes('/docs/')) {
+                var p = window.location.pathname;
+                var base = p.endsWith('/') ? p : p + '/';
+                window.location.replace(base + 'docs/');
+              }
+            }, 1000);
+          }
+        }
+        setTimeout(loadProductionFallback, 300);
+      })();
+    </script>
   </body>
 </html>
 
